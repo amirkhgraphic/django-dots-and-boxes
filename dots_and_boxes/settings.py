@@ -94,9 +94,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Customization
 AUTH_USER_MODEL = 'user.User'
 
-LOGIN_URL = reverse_lazy('user:log-in')
+LOGIN_URL = reverse_lazy('user:auth')
 LOGIN_REDIRECT_URL = reverse_lazy('home')
-LOGOUT_REDIRECT_URL = reverse_lazy('user:log-in')
+LOGOUT_REDIRECT_URL = reverse_lazy('user:auth')
 
 CRISPY_TEMPLATE_PACK = 'bootstrap5'
 

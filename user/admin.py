@@ -11,12 +11,12 @@ from utils.admin_mixin import DateListFilterMixin
 
 @admin.register(User)
 class MyUserAdmin(UserAdmin, DateListFilterMixin):
-    list_display = ('user_link', 'render_avatar', 'email', 'created_at', 'last_login', 'is_active', 'is_staff')
+    list_display = ('user_link', 'render_avatar', 'created_at', 'last_login', 'is_active', 'is_staff')
     readonly_fields = ('render_avatar', 'created_at', 'updated_at', 'last_login')
-    search_fields = ('email', 'username')
+    search_fields = ('username', )
     ordering = ('-created_at',)
     fieldsets = (
-        (_('basic'), {'fields': (('render_avatar', 'avatar'), 'email', 'username')}),
+        (_('basic'), {'fields': (('render_avatar', 'avatar'), 'username')}),
         (_('Important dates'), {'fields': ('created_at', 'updated_at', 'last_login')}),
         (_('Permissions'), {'fields': ('is_staff', 'is_active')}),
     )
@@ -24,7 +24,7 @@ class MyUserAdmin(UserAdmin, DateListFilterMixin):
     add_fieldsets = (
         ('Required Fields', {
             'classes': ('wide',),
-            'fields': ('email', 'username', 'password1', 'password2'),
+            'fields': ('username', 'password1', 'password2'),
         }),
         ('Optional Fields', {
             'classes': ('wide',),
