@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block styles %}
+    <style>
+        .game-btn {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 3px solid white;
+            border-radius: 10px;
+            color: white;
+            width: 100%;
+            margin: 0;
+        }
+
+        .game-btn:hover {
+            background-color: white;
+            color: #2473D0;
+        }
+
+        main {
+            display: flex;
+            justify-content: center;
+        }
+
+        section {
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+            gap: 10px;
+            width: 50%;
+        }
+
+        input {
+            width: 100%;
+            margin: 0;
+        }
+
+        .my-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .my-button {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 250%;
+        }
+
+        .my-button label,
+        .my-button input {
+            position: absolute;
+            cursor: pointer;
+
+            z-index: 90;
+            height: 100%;
+            width: 100%;
+        }
+
+        .my-button input[type="radio"] {
+            opacity: 0.001;
+            z-index: 100;
+        }
+
+        .my-button input[type="radio"]:checked + label {
+            background-color: white;
+            color: #2473D0;
+        }
+
+        .game-btn:hover {
+            background-color: inherit;
+            color: white;
+        }
+
+
+    </style>
+{% endblock %}
+
+{% block header %}
+    {% include 'header.html' %}
+{% endblock %}
+
+{% block main %}
+    <main>
+        <section>
+            <h2>Game Configuration</h2>
+
+            <form method="POST">
+                {% csrf_token %}
+                <div class="my-row">
+                    <p>Board</p>
+                    <div class="my-button game-btn">
+                        <input type="radio" id="4x4" name="board-size" value="4" required/>
+                        <label for="4x4">4x4</label>
+                    </div>
+                    <div class="my-button game-btn">
+                        <input type="radio" id="6x6" name="board-size" value="6" required/>
+                        <label for="6x6">6x6</label>
+                    </div>
+                </div>
+                <button type="submit" class="btn">Create Room</button>
+            </form>
+        </section>
+    </main>
+{% endblock %}

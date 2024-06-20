@@ -2,6 +2,7 @@
 .idea/
 __pycache__
 
+staticfiles/
 media/
 
 local_*

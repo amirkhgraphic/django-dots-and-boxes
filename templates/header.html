@@ -1,5 +1,5 @@
 <header>
-    <h1>Dots & Boxes Online Game</h1>
+    <a href="{% url 'home' %}" style="all: unset; cursor: pointer"><h1>Dots & Boxes Online Game</h1></a>
     {% if user.is_authenticated %}
         <div style="display: flex; align-items: center">
             <form style="margin: 0" method="POST" action="{% url 'user:log-out' %}">

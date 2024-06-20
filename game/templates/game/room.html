@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+
+{% block styles %}
+    <style>
+        main {
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 10px;
+            width: 50%;
+        }
+
+        .text-big {
+            font-size: 10rem;
+        }
+
+        .btn-cancel {
+            background-color: #D02424;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            color: white;
+            background-color: #a61b1b;
+            transition: ease-in-out 0.3s;
+        }
+
+
+
+        #game-status {
+            margin-bottom: 20px;
+        }
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+            gap: 5px;
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            background-color: black;
+            border-radius: 50%;
+        }
+        .line {
+            width: 40px;
+            height: 10px;
+            background-color: white;
+        }
+        .line.horizontal {
+            cursor: pointer;
+        }
+        .line.vertical {
+            width: 10px;
+            height: 40px;
+            cursor: pointer;
+        }
+        .square {
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .line.selected {
+            background-color: black;
+        }
+        .square.player1 {
+            background-color: lightblue;
+        }
+        .square.player2 {
+            background-color: lightcoral;
+        }
+    </style>
+{% endblock %}
+
+{% block header %}
+    {% include 'header.html' %}
+{% endblock %}
+
+{% block main %}
+    <main>
+        <div id="messages" class="w-100"></div>
+
+        <section id="game-section">
+            <p>online users: <span id="online-count">0</span></p>
+            <h1 class="text-big">Pending...</h1>
+
+            <a style="width: 50%" href="{% url "game:delete-room" room_id %}">
+                <button class="btn btn-cancel fs-5">Leave the Room</button>
+            </a>
+            <p style="font-style: italic;">The game will begin once another player joins the room</p>
+        </section>
+    </main>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        const messages = document.getElementById('messages')
+        const roomName = "{{ room_id }}";
+        const playerId = "{{ user_id }}";
+        const onlineCount = document.getElementById('online-count');
+        let socket;
+
+        function notification(player, notif_type, action) {
+            let div = document.createElement('div');
+            div.className = `alert alert-${notif_type} alert-dismissible fade show`;
+            div.role = 'alert'
+            div.innerHTML = `<strong>${player}</strong> ${action} the room.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
+            messages.append(div)
+        }
+
+        function initializeWebSocket() {
+            socket = new WebSocket(`ws://${window.location.host}/ws/game/${roomName}/`);
+
+            socket.onopen = function() {
+                console.log('WebSocket connection opened');
+            };
+
+            socket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                if (data.type === 'player_joined') {
+                    notification(data.player, 'primary', 'join')
+                }
+                if (data.type === 'online_users') {
+                    onlineCount.innerText = data.count
+                }
+                else if (data.type === 'player_left') {
+                    notification(data.player, 'danger', 'left')
+                }
+                else if (data.type === 'start_game') {
+                    let section = document.getElementById('game-section');
+                    section.style.backgroundColor = 'black';
+                    section.innerHTML = `${data.host} - ${data.guest} - \n size: ${data.size}`
+                }
+                else if (data.type === 'game_move') {
+                    updateGameBoard(data.row, data.col, data.side, data.player);
+                }
+                else if (data.type === 'wrong_move') {
+                    // updateGameBoard(data.row, data.col, data.side, data.player);
+                }
+            };
+
+            socket.onerror = function(error) {
+                console.error('WebSocket error:', error);
+            };
+
+            socket.onclose = function() {
+                console.log('WebSocket connection closed');
+            };
+        }
+
+
+        function sendMove(row, col, side) {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    'action': 'make_move',
+                    'row': row,
+                    'col': col,
+                    'side': side,
+                    'player': playerId
+                }));
+            } else {
+                console.error('WebSocket is not open. Ready state:', socket.readyState);
+            }
+        }
+
+        function createGameBoard(n) {
+            const gameBoard = document.getElementById('game-board');
+            gameBoard.style.gridTemplateColumns = `repeat(${n * 2 - 1}, 1fr)`;
+
+            for (let i = 1; i <= n; i++) {
+                for (let j = 1; j <= n; j++) {
+                    gameBoard.appendChild(createDot());
+                    if (j < n) gameBoard.appendChild(createLine('horizontal', i, j));
+                }
+                if (i < n) {
+                    for (let j = 1; j <= n; j++) {
+                        gameBoard.appendChild(createLine('vertical', i, j));
+                        if (j < n) gameBoard.appendChild(createSquare(i, j));
+                    }
+                }
+            }
+        }
+
+        function createDot() {
+            const dot = document.createElement('div');
+            dot.classList.add('dot');
+            return dot;
+        }
+
+        function createLine(orientation, row, col) {
+            const line = document.createElement('div');
+            line.classList.add('line', orientation);
+            line.addEventListener('click', () => sendMove(row, col, orientation));
+            return line;
+        }
+
+        function createSquare(row, col) {
+            const square = document.createElement('div');
+            square.classList.add('square');
+            square.setAttribute('data-row', row);
+            square.setAttribute('data-col', col);
+            return square;
+        }
+
+        function updateGameBoard(row, col, side, player) {
+            const squares = document.querySelectorAll(`.square[data-row="${row}"][data-col="${col}"]`);
+            squares.forEach(square => {
+                if (!square.classList.contains('player1') && !square.classList.contains('player2')) {
+                    square.classList.add(`player${player}`);
+                }
+            });
+
+            const lines = document.querySelectorAll(`.line.${side}`);
+            lines.forEach(line => {
+                if (!line.classList.contains('selected')) {
+                    line.classList.add('selected');
+                }
+            });
+        }
+
+        // Initialize WebSocket and create the game board when the page loads
+        window.onload = () => {
+            initializeWebSocket();
+            createGameBoard({{ board_size }}); // Assuming a 5x5 board for this example
+        };
+    </script>
+{% endblock %}

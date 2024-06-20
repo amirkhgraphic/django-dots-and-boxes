@@ -31,9 +31,11 @@
 {% block main %}
     <main>
         <section>
-            <button class="btn game-btn"><i class="bi bi-robot"></i> Single Player</button>
-            <a href="{% url "game:create-join" %}">
-                <button class="btn game-btn"><i class="bi bi-people-fill"></i> Two Player</button>
+            <a href="{% url "game:create-room" %}">
+                <button class="btn game-btn">Create Room</button>
+            </a>
+            <a href="{% url "game:join-room" %}">
+                <button class="btn game-btn">Join Room</button>
             </a>
         </section>
     </main>
