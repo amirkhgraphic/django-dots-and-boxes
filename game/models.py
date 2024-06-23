@@ -5,11 +5,38 @@ User = get_user_model()
 
 
 class Board(models.Model):
+    PLAYER_CHOICES = [
+        ('host', 'Host'),
+        ('guest', 'Guest'),
+    ]
+
     size = models.IntegerField()
-    is_complete = models.BooleanField(default=False)
+    host = models.ForeignKey(User, on_delete=models.CASCADE, related_name='host_games', null=True, blank=True)
+    guest = models.ForeignKey(User, on_delete=models.CASCADE, related_name='guest_games', null=True, blank=True)
+    turn = models.CharField(max_length=7, choices=PLAYER_CHOICES, default='host')
+    winner = models.CharField(max_length=7, choices=PLAYER_CHOICES, null=True, blank=True)
 
     def __str__(self):
         return f"Board {self.id} ({self.size}x{self.size})"
+
+    @property
+    def is_complete(self):
+        scores = {
+            self.host: 0,
+            self.guest: 0,
+        }
+
+        for square in self.squares.all():
+            if not square.is_complete:
+                return False
+            scores[square.winner] += 1
+
+        if scores[self.host] == scores[self.guest]:
+            return 'Draw'
+        elif scores[self.host] > scores[self.guest]:
+            return str(self.host)
+
+        return str(self.guest)
 
 
 class Square(models.Model):
@@ -40,17 +67,10 @@ class GameRoom(models.Model):
         ('complete', 'Complete'),
     ]
 
-    PLAYER_CHOICES = [
-        ('player1', 'Host'),
-        ('player2', 'Guest'),
-    ]
-
     board = models.OneToOneField(Board, on_delete=models.CASCADE, related_name='game_room')
     player1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='player1_games', null=True, blank=True)
     player2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='player2_games', null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
-    turn = models.CharField(max_length=7, choices=PLAYER_CHOICES, default='player1')
-    winner = models.CharField(max_length=7, choices=PLAYER_CHOICES, null=True, blank=True)
     online_users = models.ManyToManyField(User, related_name='online_in_groups', blank=True)
 
     def __str__(self):

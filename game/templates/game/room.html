@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block styles %}
     <style>
@@ -18,6 +19,14 @@
             width: 50%;
         }
 
+        #game-section {
+            display: none;
+        }
+
+        #pending-section {
+            display: flex;
+        }
+
         .text-big {
             font-size: 10rem;
         }
@@ -34,64 +43,56 @@
             transition: ease-in-out 0.3s;
         }
 
-
-
-        #game-status {
-            margin-bottom: 20px;
-        }
-        #game-board {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
-            gap: 5px;
-        }
-        .dot {
-            width: 10px;
-            height: 10px;
-            background-color: black;
-            border-radius: 50%;
-        }
-        .line {
-            width: 40px;
-            height: 10px;
-            background-color: white;
-        }
-        .line.horizontal {
-            cursor: pointer;
-        }
-        .line.vertical {
-            width: 10px;
-            height: 40px;
-            cursor: pointer;
-        }
-        .square {
-            width: 40px;
-            height: 40px;
-            background-color: white;
+        .overlay {
+            visibility: hidden;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-        }
-        .line.selected {
-            background-color: black;
-        }
-        .square.player1 {
-            background-color: lightblue;
-        }
-        .square.player2 {
-            background-color: lightcoral;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 150vh;
+            background: rgba(0,0,0,0.5);
+            z-index: 50;
         }
     </style>
-{% endblock %}
-
-{% block header %}
-    {% include 'header.html' %}
+    <link rel="stylesheet" href="{% static 'css/board_style.css' %}">
 {% endblock %}
 
 {% block main %}
     <main>
         <div id="messages" class="w-100"></div>
 
-        <section id="game-section">
+        <h1>Room name: {{ room_id }}</h1>
+        <section id="profiles">
+            <div class="profile" id="host">
+                <div class="online" id="host-online"></div>
+                <img src="{% static 'img/default-user2.png' %}" id="host-avatar" alt="host-avatar" width="75px" height="75px">
+                <div class="username" id="host-username">Unknown</div>
+            </div>
+
+            <div class="profile" id="guest" dir="rtl">
+                <div class="online" id="guest-online"></div>
+                <img src="{% static 'img/default-user2.png' %}" id="guest-avatar" alt="guest-avatar" width="75px" height="75px">
+                <div dir="ltr" class="username" id="guest-username">Unknown</div>
+            </div>
+        </section>
+
+        <div id="overlay" class="overlay">
+            <h3>Wait for your opponent's move</h3>
+        </div>
+
+        <div id="score-board" class="overlay">
+            <h2 id="winner"></h2>
+            <a style="width: 50%" href="{% url "home" %}">
+                <button class="btn btn-cancel" >&times;</button>
+            </a>
+        </div>
+
+        <section id="pending-section">
+            <div id="board"></div>
             <p>online users: <span id="online-count">0</span></p>
             <h1 class="text-big">Pending...</h1>
 
@@ -100,23 +101,49 @@
             </a>
             <p style="font-style: italic;">The game will begin once another player joins the room</p>
         </section>
+
+        <section id="game-section">
+            <div id="dots"></div>
+            <div id="lines"></div>
+            <div id="squares"></div>
+        </section>
     </main>
 {% endblock %}
 
 {% block scripts %}
     <script>
-        const messages = document.getElementById('messages')
-        const roomName = "{{ room_id }}";
-        const playerId = "{{ user_id }}";
-        const onlineCount = document.getElementById('online-count');
         let socket;
+        let playerTurn;
+        let host, guest;
+        let playerColors = {};
+        const roomName = "{{ room_id }}";
+        const playerUsername = "@{{ username }}";
+        const messages = document.getElementById('messages');
+        const onlineCount = document.getElementById('online-count');
 
-        function notification(player, notif_type, action) {
+        // game board section
+        const gameSection = document.getElementById('game-section');
+        const pendingSection = document.getElementById('pending-section');
+        const dots = document.getElementById('dots');
+        const lines = document.getElementById('lines');
+        const squares = document.getElementById('squares');
+        const overlay = document.getElementById('overlay');
+        const scoreBoard = document.getElementById('score-board');
+        const winner = document.getElementById('winner');
+
+        // profile
+        const hostAvatar = document.getElementById('host-avatar');
+        const hostUsername = document.getElementById('host-username');
+        const hostOnline = document.getElementById('host-online');
+        const guestAvatar = document.getElementById('guest-avatar');
+        const guestUsername = document.getElementById('guest-username');
+        const guestOnline = document.getElementById('guest-online');
+
+        function notification(notif_type, text) {
             let div = document.createElement('div');
             div.className = `alert alert-${notif_type} alert-dismissible fade show`;
             div.role = 'alert'
-            div.innerHTML = `<strong>${player}</strong> ${action} the room.
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
+            div.innerHTML = `${text} <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
             messages.append(div)
         }
 
@@ -124,30 +151,106 @@
             socket = new WebSocket(`ws://${window.location.host}/ws/game/${roomName}/`);
 
             socket.onopen = function() {
-                console.log('WebSocket connection opened');
+                socket.send(JSON.stringify({
+                    'action': 'get_host',
+                }))
             };
 
             socket.onmessage = function(e) {
                 const data = JSON.parse(e.data);
-                if (data.type === 'player_joined') {
-                    notification(data.player, 'primary', 'join')
+
+                if (data.type === 'host_info') {
+                    hostUsername.innerText = data.player;
+                    hostAvatar.src = data.avatar;
+                    hostOnline.style.visibility = 'visible';
                 }
-                if (data.type === 'online_users') {
+
+                else if (data.type === 'player_joined') {
+                    if (data.role === 'host') {
+                        hostUsername.innerText = data.player;
+                        hostAvatar.src = data.avatar;
+                        hostOnline.style.visibility = 'visible';
+                    } else {
+                        guestUsername.innerText = data.player;
+                        guestAvatar.src = data.avatar;
+                        guestOnline.style.visibility = 'visible';
+                    }
+                    notification('primary', `<strong>${data.player}</strong> joined the room.`);
+                }
+
+                else if (data.type === 'player_left') {
+                    if (data.player === hostUsername.innerText) {
+                        hostUsername.innerText = 'Unknown';
+                        hostAvatar.src = `{% static 'img/default-user2.png' %}`;
+                        hostOnline.style.visibility = 'hidden';
+                    } else {
+                        guestUsername.innerText = 'Unknown';
+                        guestAvatar.src = `{% static 'img/default-user2.png' %}`;
+                        guestOnline.style.visibility = 'hidden';
+                    }
+                    notification('danger', `<strong>${data.player}</strong> left the room.`);
+                }
+
+                else if (data.type === 'online_users') {
                     onlineCount.innerText = data.count
                 }
-                else if (data.type === 'player_left') {
-                    notification(data.player, 'danger', 'left')
+
+                else if (data.type === 'room_deleted') {
+                    let div = document.createElement('div');
+                    div.className = `alert alert-danger alert-dismissible fade show`;
+                    div.role = 'alert';
+                    div.innerHTML = `${data.message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
+                    messages.append(div);
+                    socket.close();
+                    window.location.href = '/';
                 }
+
                 else if (data.type === 'start_game') {
-                    let section = document.getElementById('game-section');
-                    section.style.backgroundColor = 'black';
-                    section.innerHTML = `${data.host} - ${data.guest} - \n size: ${data.size}`
+                    host = data.host;
+                    guest = data.guest;
+                    playerColors[data.host] = 'host';
+                    playerColors[data.guest] = 'guest';
+
+                    playerTurn = host
+                    startGame(data.host, data.guest, data.current_player, data.current_turn);
                 }
+
+                else if (data.type === 'stop_game') {
+                    document.getElementById('game-section').style.display = 'none';
+                    document.getElementById('pending-section').style.display = 'flex';
+
+                    guestUsername.innerText = 'Unknown';
+                    guestAvatar.src = `{% static 'img/default-user2.png' %}`;
+                    guestOnline.style.visibility = 'hidden';
+                }
+
                 else if (data.type === 'game_move') {
                     updateGameBoard(data.row, data.col, data.side, data.player);
+                    playerTurn = playerTurn === guest ? host : guest;
+                    changeTurn()
                 }
+
+                else if (data.type === 'square_complete') {
+                    fillSquare(data.row, data.col, data.player);
+                    playerTurn = data.player;
+                    changeTurn()
+                }
+
                 else if (data.type === 'wrong_move') {
-                    // updateGameBoard(data.row, data.col, data.side, data.player);
+                    notification('danger', 'Invalid Move!');
+                }
+
+                else if (data.type === 'game_over') {
+                    overlay.style.visibility = 'hidden';
+                    scoreBoard.style.visibility = 'visible';
+
+                    if (data.winner === 'Draw') {
+                        winner.innerText = 'Match Ends in a Draw.';
+                    } else if (data.winner === playerUsername) {
+                        winner.innerText = 'You won the match :)';
+                    } else {
+                        winner.innerText = 'You lost the match :(';
+                    }
                 }
             };
 
@@ -160,36 +263,84 @@
             };
         }
 
+        function startGame(host, guest, currentPlayer, currentTurn) {
+            gameSection.style.display = 'flex';
+            pendingSection.style.display = 'none';
+            playerTurn = currentTurn
+            changeTurn()
+        }
+
+        function changeTurn() {
+            if (playerUsername === playerTurn) {
+                overlay.style.visibility = 'hidden';
+            } else {
+                overlay.style.visibility = 'visible';
+            }
+        }
 
         function sendMove(row, col, side) {
-            if (socket.readyState === WebSocket.OPEN) {
+            if (playerUsername !== playerTurn) {
+                alert('its not your turn');
+            }
+            else if (socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({
                     'action': 'make_move',
                     'row': row,
                     'col': col,
                     'side': side,
-                    'player': playerId
+                    'player': playerUsername
                 }));
-            } else {
+
+            }
+            else {
                 console.error('WebSocket is not open. Ready state:', socket.readyState);
             }
         }
 
         function createGameBoard(n) {
-            const gameBoard = document.getElementById('game-board');
-            gameBoard.style.gridTemplateColumns = `repeat(${n * 2 - 1}, 1fr)`;
-
+            // dots
             for (let i = 1; i <= n; i++) {
+                let rowDot = document.createElement('div');
+                rowDot.classList.add('row-dot');
+
                 for (let j = 1; j <= n; j++) {
-                    gameBoard.appendChild(createDot());
-                    if (j < n) gameBoard.appendChild(createLine('horizontal', i, j));
+                    rowDot.appendChild(createDot());
                 }
-                if (i < n) {
-                    for (let j = 1; j <= n; j++) {
-                        gameBoard.appendChild(createLine('vertical', i, j));
-                        if (j < n) gameBoard.appendChild(createSquare(i, j));
+                dots.appendChild(rowDot)
+            }
+
+            // lines
+            for (let i = 1; i <= n; i++) {
+                let rowLine = document.createElement('div');
+                rowLine.classList.add('row-line');
+                let rowLineVertical = document.createElement('div');
+                rowLineVertical.classList.add('row-line', 'row-vertical');
+
+                for (let j = 1; j <= n; j++) {
+                    if (i !== n) {
+                        if (j !== n) {
+                            rowLine.appendChild(createLine(i, j, 'top', ['line']));
+                            rowLineVertical.appendChild(createLine(i, j, 'left', ['line', 'vertical']));
+                        } else rowLineVertical.appendChild(createLine(i, j - 1, 'right', ['line', 'vertical']));
+
+                    } else {
+                        if (j !== n) rowLine.appendChild(createLine(i - 1, j, 'bottom', ['line']));
                     }
                 }
+
+                lines.appendChild(rowLine);
+                if (i !== n) lines.appendChild(rowLineVertical);
+            }
+
+            // squares
+            for (let i = 1; i < n; i++) {
+                let rowSquare = document.createElement('div');
+                rowSquare.classList.add('row-square');
+
+                for (let j = 1; j < n; j++) {
+                    rowSquare.appendChild(createSquare(i, j));
+                }
+                squares.appendChild(rowSquare)
             }
         }
 
@@ -199,10 +350,13 @@
             return dot;
         }
 
-        function createLine(orientation, row, col) {
+        function createLine(row, col, side, classList) {
             const line = document.createElement('div');
-            line.classList.add('line', orientation);
-            line.addEventListener('click', () => sendMove(row, col, orientation));
+            line.classList.add(...classList);
+            line.setAttribute('data-row', row);
+            line.setAttribute('data-col', col);
+            line.setAttribute('data-side', side);
+            line.addEventListener('click', () => sendMove(row, col, side));
             return line;
         }
 
@@ -215,25 +369,19 @@
         }
 
         function updateGameBoard(row, col, side, player) {
-            const squares = document.querySelectorAll(`.square[data-row="${row}"][data-col="${col}"]`);
-            squares.forEach(square => {
-                if (!square.classList.contains('player1') && !square.classList.contains('player2')) {
-                    square.classList.add(`player${player}`);
-                }
-            });
+            const line = document.querySelector(`[data-row="${row}"][data-col="${col}"][data-side="${side}"]`);
+            line.classList.add(`${playerColors[player]}-line`);
+        }
 
-            const lines = document.querySelectorAll(`.line.${side}`);
-            lines.forEach(line => {
-                if (!line.classList.contains('selected')) {
-                    line.classList.add('selected');
-                }
-            });
+        function fillSquare(row, col, player) {
+            const square = document.querySelector(`.square[data-row="${row}"][data-col="${col}"]`);
+            square.classList.add(`${playerColors[player]}-square`);
         }
 
         // Initialize WebSocket and create the game board when the page loads
         window.onload = () => {
             initializeWebSocket();
-            createGameBoard({{ board_size }}); // Assuming a 5x5 board for this example
+            createGameBoard({{ board_size }});
         };
     </script>
 {% endblock %}

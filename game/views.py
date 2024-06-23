@@ -14,8 +14,7 @@ def create_room_view(request):
             for j in range(1, board_size):
                 Square.objects.create(board=board, row=i, col=j)
 
-        game_room = GameRoom.objects.create(board=board)
-        game_room.add_player(request.user)
+        game_room = GameRoom.objects.create(board=board, player1=request.user)
         return redirect('game:room', room_id=game_room.id)
 
     return render(request, 'game/create_room.html')
@@ -51,7 +50,7 @@ def room_view(request, room_id):
 
     context = {
         'room_id': room_id,
-        'user_id': request.user.id,
+        'username': request.user.username,
         'board_size': room.board.size,
     }
 
