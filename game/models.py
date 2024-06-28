@@ -31,9 +31,7 @@ class Board(models.Model):
                 return False
             scores[square.winner] += 1
 
-        if scores[self.host] == scores[self.guest]:
-            return 'Draw'
-        elif scores[self.host] > scores[self.guest]:
+        if scores[self.host] > scores[self.guest]:
             return str(self.host)
 
         return str(self.guest)

@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     'user.apps.UserConfig',
     'game.apps.GameConfig',
 
+    'channels',
     'bootstrap5',
 ]
 
@@ -56,11 +57,21 @@ TEMPLATES = [
 
 ASGI_APPLICATION = 'dots_and_boxes.asgi.application'
 
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer',
-    },
-}
+if DEBUG:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        },
+    }
+else:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [("redis://:43mVhHibzHx2Gdf3oOh08D1D@dots-and-boxes-redis:6379/0")],
+            },
+        },
+    }
 
 DATABASES = {
     'default': {

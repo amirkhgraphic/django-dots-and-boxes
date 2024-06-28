@@ -3,10 +3,6 @@
 
 {% block styles %}
     <style>
-        #messages {
-            z-index: 60;
-        }
-
         #room-name {
             z-index: 60;
         }
@@ -28,15 +24,11 @@
         }
 
         #game-section {
-            display: none;
+            display: flex;
         }
 
         #pending-section {
             display: flex;
-        }
-
-        .text-big {
-            font-size: 10rem;
         }
 
         .btn-cancel {
@@ -71,26 +63,21 @@
 
 {% block main %}
     <main>
-        <div id="messages" class="w-100"></div>
-
         <h1 id="room-name">Room name: {{ room_id }}</h1>
+
         <section id="profiles">
             <div class="profile" id="host">
                 <div class="online" id="host-online"></div>
-                <img src="{% static 'img/default-user2.png' %}" id="host-avatar" alt="host-avatar" width="75px" height="75px">
-                <div class="username" id="host-username">Unknown</div>
+                <img src="{{ user.avatar.url }}" id="host-avatar" alt="host-avatar" width="75px" height="75px">
+                <div class="username" id="host-username">{{ user.username }}</div>
             </div>
 
             <div class="profile" id="guest" dir="rtl">
                 <div class="online" id="guest-online"></div>
-                <img src="{% static 'img/default-user2.png' %}" id="guest-avatar" alt="guest-avatar" width="75px" height="75px">
-                <div dir="ltr" class="username" id="guest-username">Unknown</div>
+                <img src="{{ bot.avatar.url }}" id="guest-avatar" alt="guest-avatar" width="75px" height="75px">
+                <div dir="ltr" class="username" id="guest-username">Bot</div>
             </div>
         </section>
-
-        <div id="overlay" class="overlay">
-            <h3>Wait for your opponent's move</h3>
-        </div>
 
         <div id="score-board" class="overlay">
             <h2 id="winner"></h2>
@@ -98,17 +85,6 @@
                 <button class="btn btn-cancel" >&times;</button>
             </a>
         </div>
-
-        <section id="pending-section">
-            <div id="board"></div>
-            <p>online users: <span id="online-count">0</span></p>
-            <h1 class="text-big">Pending...</h1>
-
-            <a style="width: 50%" href="{% url "game:home" room_id %}">
-                <button class="btn btn-cancel fs-5">Leave the Room</button>
-            </a>
-            <p style="font-style: italic;">The game will begin once another player joins the room</p>
-        </section>
 
         <section id="game-section">
             <div id="dots"></div>
@@ -121,13 +97,14 @@
 {% block scripts %}
     <script>
         let socket;
-        let playerTurn;
-        let host, guest;
-        let playerColors = {};
+        const playerColors = {
+            "@{{ user.username }}": 'host',
+            "@{{ bot.username }}": 'guest',
+        };
+        const host = "@{{ user.username }}";
+        const guest = "@{{ bot.username }}";
         const roomName = "{{ room_id }}";
-        const playerUsername = "@{{ username }}";
-        const messages = document.getElementById('messages');
-        const onlineCount = document.getElementById('online-count');
+        let playerTurn = host;
 
         // game board section
         const gameSection = document.getElementById('game-section');
@@ -135,130 +112,43 @@
         const dots = document.getElementById('dots');
         const lines = document.getElementById('lines');
         const squares = document.getElementById('squares');
-        const overlay = document.getElementById('overlay');
         const scoreBoard = document.getElementById('score-board');
         const winner = document.getElementById('winner');
 
-        // profile
-        const hostAvatar = document.getElementById('host-avatar');
-        const hostUsername = document.getElementById('host-username');
-        const hostOnline = document.getElementById('host-online');
-        const guestAvatar = document.getElementById('guest-avatar');
-        const guestUsername = document.getElementById('guest-username');
-        const guestOnline = document.getElementById('guest-online');
-
-        function notification(notif_type, text) {
-            let div = document.createElement('div');
-            div.className = `alert alert-${notif_type} alert-dismissible fade show`;
-            div.role = 'alert'
-            div.innerHTML = `${text} <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
-            messages.append(div)
-        }
-
         function initializeWebSocket() {
-            socket = new WebSocket(`ws://${window.location.host}/ws/two-player-room/${roomName}/`);
-
-            socket.onopen = function() {
-                socket.send(JSON.stringify({
-                    'action': 'get_host',
-                }))
-            };
+            socket = new WebSocket(`ws://${window.location.host}/ws/single-player-room/${roomName}/`);
+            gameSection.style.display = 'flex';
 
             socket.onmessage = function(e) {
                 const data = JSON.parse(e.data);
 
-                if (data.type === 'host_info') {
-                    hostUsername.innerText = data.player;
-                    hostAvatar.src = data.avatar;
-                    hostOnline.style.visibility = 'visible';
-                }
-
-                else if (data.type === 'player_joined') {
-                    if (data.role === 'host') {
-                        hostUsername.innerText = data.player;
-                        hostAvatar.src = data.avatar;
-                        hostOnline.style.visibility = 'visible';
-                    } else {
-                        guestUsername.innerText = data.player;
-                        guestAvatar.src = data.avatar;
-                        guestOnline.style.visibility = 'visible';
-                    }
-                    notification('primary', `<strong>${data.player}</strong> joined the room.`);
-                }
-
-                else if (data.type === 'player_left') {
-                    if (data.player === hostUsername.innerText) {
-                        hostUsername.innerText = 'Unknown';
-                        hostAvatar.src = `{% static 'img/default-user2.png' %}`;
-                        hostOnline.style.visibility = 'hidden';
-                    } else {
-                        guestUsername.innerText = 'Unknown';
-                        guestAvatar.src = `{% static 'img/default-user2.png' %}`;
-                        guestOnline.style.visibility = 'hidden';
-                    }
-                    notification('danger', `<strong>${data.player}</strong> left the room.`);
-                }
-
-                else if (data.type === 'online_users') {
-                    onlineCount.innerText = data.count
-                }
-
-                else if (data.type === 'room_deleted') {
-                    let div = document.createElement('div');
-                    div.className = `alert alert-danger alert-dismissible fade show`;
-                    div.role = 'alert';
-                    div.innerHTML = `${data.message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
-                    messages.append(div);
-                    socket.close();
-                    window.location.href = '/';
-                }
-
-                else if (data.type === 'start_game') {
-                    host = data.host;
-                    guest = data.guest;
-                    playerColors[data.host] = 'host';
-                    playerColors[data.guest] = 'guest';
-
-                    playerTurn = host
-                    startGame(data.host, data.guest, data.current_player, data.current_turn);
-                }
-
-                else if (data.type === 'stop_game') {
-                    document.getElementById('game-section').style.display = 'none';
-                    document.getElementById('pending-section').style.display = 'flex';
-
-                    guestUsername.innerText = 'Unknown';
-                    guestAvatar.src = `{% static 'img/default-user2.png' %}`;
-                    guestOnline.style.visibility = 'hidden';
-                }
-
-                else if (data.type === 'game_move') {
+                if (data.type === 'game_move') {
                     updateGameBoard(data.row, data.col, data.side, data.player);
-                    playerTurn = playerTurn === guest ? host : guest;
-                    changeTurn()
-                }
 
-                else if (data.type === 'square_complete') {
-                    fillSquare(data.row, data.col, data.player);
-                    playerTurn = data.player;
-                    changeTurn()
+                    let complete_squares = data.squares;
+                    if (complete_squares.length !== 0) {
+                        for (let square of complete_squares) {
+                            fillSquare(square.row, square.col, data.player);
+                        }
+                    }
+
+
                 }
 
                 else if (data.type === 'wrong_move') {
-                    notification('danger', 'Invalid Move!');
+                    alert("Invalid Move!");
                 }
 
                 else if (data.type === 'game_over') {
-                    overlay.style.visibility = 'hidden';
-                    scoreBoard.style.visibility = 'visible';
-
                     if (data.winner === 'Draw') {
                         winner.innerText = 'Match Ends in a Draw.';
-                    } else if (data.winner === playerUsername) {
+                    } else if (data.winner === host) {
                         winner.innerText = 'You won the match :)';
                     } else {
                         winner.innerText = 'You lost the match :(';
                     }
+
+                    scoreBoard.style.visibility = 'visible';
                 }
             };
 
@@ -271,23 +161,8 @@
             };
         }
 
-        function startGame(host, guest, currentPlayer, currentTurn) {
-            gameSection.style.display = 'flex';
-            pendingSection.style.display = 'none';
-            playerTurn = currentTurn
-            changeTurn()
-        }
-
-        function changeTurn() {
-            if (playerUsername === playerTurn) {
-                overlay.style.visibility = 'hidden';
-            } else {
-                overlay.style.visibility = 'visible';
-            }
-        }
-
         function sendMove(row, col, side) {
-            if (playerUsername !== playerTurn) {
+            if (host !== playerTurn) {
                 alert('its not your turn');
             }
             else if (socket.readyState === WebSocket.OPEN) {
@@ -296,7 +171,7 @@
                     'row': row,
                     'col': col,
                     'side': side,
-                    'player': playerUsername
+                    'player': host
                 }));
 
             }
@@ -377,8 +252,7 @@
         }
 
         function updateGameBoard(row, col, side, player) {
-            const line = document.querySelector(`[data-row="${row}"][data-col="${col}"][data-side="${side}"]`);
-            line.classList.add(`${playerColors[player]}-line`);
+            document.querySelector(`[data-row="${row}"][data-col="${col}"][data-side="${side}"]`).classList.add(`${playerColors[player]}-line`);
         }
 
         function fillSquare(row, col, player) {
@@ -388,8 +262,8 @@
 
         // Initialize WebSocket and create the game board when the page loads
         window.onload = () => {
-            initializeWebSocket();
             createGameBoard({{ board_size }});
+            initializeWebSocket();
         };
     </script>
 {% endblock %}

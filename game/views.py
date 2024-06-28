@@ -1,7 +1,11 @@
+from django.contrib.auth import get_user_model
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 
 from .models import GameRoom, Board, Square
+
+
+User = get_user_model()
 
 
 @login_required
@@ -58,10 +62,35 @@ def room_view(request, room_id):
 
 
 @login_required
-def delete_room_view(request, room_id):
+def create_pve_room(request):
+    if request.method == 'POST':
+        player = request.user
+        bot = User.objects.get(username='bot')
+        board_size = int(request.POST.get('board-size'))
+        board = Board.objects.create(size=board_size, host=player, guest=bot)
+
+        for i in range(1, board_size):
+            for j in range(1, board_size):
+                Square.objects.create(board=board, row=i, col=j)
+
+        room = GameRoom.objects.create(player1=player, player2=bot, board=board)
+        return redirect('game:pve-room', room_id=room.id)
+
+    return render(request, 'game/pve.html')
+
+
+@login_required
+def pve_room_view(request, room_id):
     room = get_object_or_404(GameRoom, id=room_id)
 
-    if request.user.id != room.player1:
-        room.delete()
+    if request.user != room.player1:
+        return redirect('home')
 
-    return redirect('game:create-join')
+    context = {
+        'room_id': room_id,
+        'user': request.user,
+        'bot': room.player2,
+        'board_size': room.board.size,
+    }
+
+    return render(request, 'game/pve-room.html', context)

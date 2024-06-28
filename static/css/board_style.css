@@ -5,6 +5,7 @@ section#profiles {
     justify-content: space-between;
     align-items: center;
     width: 100%;
+    z-index: 60;
 
 
     .profile {
@@ -180,3 +181,4 @@ section#profiles {
         background-color: rgb(255, 161, 161);
     }
 }
+
