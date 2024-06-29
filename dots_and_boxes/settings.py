@@ -21,6 +21,7 @@ INSTALLED_APPS = [
 
     'user.apps.UserConfig',
     'game.apps.GameConfig',
+    'log.apps.LogConfig',
 
     'channels',
     'bootstrap5',

@@ -8,7 +8,8 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
 
-from .models import GameRoom, Square, Move
+from .models import GameRoom, Square
+from log.models import Move
 
 
 User = get_user_model()
@@ -327,11 +328,11 @@ class TwoPlayerRoomConsumer(AsyncWebsocketConsumer):
             if square.is_complete:
                 square.winner = player
                 square.save()
-                Move.objects.create(game_room=self.room, player=player, row=row, col=col, side=side)
+                Move.objects.create(board=self.room.board, player=player, row=row, col=col, side=side)
                 return 'complete'
 
             square.save()
-            Move.objects.create(game_room=self.room, player=player, row=row, col=col, side=side)
+            Move.objects.create(board=self.room.board, player=player, row=row, col=col, side=side)
             return 'done'
 
         except Square.DoesNotExist:
@@ -467,6 +468,7 @@ class SinglePlayerRoomConsumer(AsyncWebsocketConsumer):
                 }
             )
             change_turn = None
+            await self.delete_room()
 
         return change_turn
 
@@ -517,11 +519,11 @@ class SinglePlayerRoomConsumer(AsyncWebsocketConsumer):
             if square.is_complete:
                 square.winner = player
                 square.save()
-                Move.objects.create(game_room=self.room, player=player, row=row, col=col, side=side)
+                Move.objects.create(board=self.room.board, player=player, row=row, col=col, side=side)
                 return 'complete'
 
             square.save()
-            Move.objects.create(game_room=self.room, player=player, row=row, col=col, side=side)
+            Move.objects.create(board=self.room.board, player=player, row=row, col=col, side=side)
             return 'done'
 
         except Square.DoesNotExist:

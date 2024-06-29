@@ -58,7 +58,7 @@ def room_view(request, room_id):
         'board_size': room.board.size,
     }
 
-    return render(request, 'game/room.html', context)
+    return render(request, 'game/pvp-room.html', context)
 
 
 @login_required

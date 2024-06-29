@@ -14,7 +14,7 @@ class Board(models.Model):
     host = models.ForeignKey(User, on_delete=models.CASCADE, related_name='host_games', null=True, blank=True)
     guest = models.ForeignKey(User, on_delete=models.CASCADE, related_name='guest_games', null=True, blank=True)
     turn = models.CharField(max_length=7, choices=PLAYER_CHOICES, default='host')
-    winner = models.CharField(max_length=7, choices=PLAYER_CHOICES, null=True, blank=True)
+    winner = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='victories')
 
     def __str__(self):
         return f"Board {self.id} ({self.size}x{self.size})"
@@ -32,8 +32,12 @@ class Board(models.Model):
             scores[square.winner] += 1
 
         if scores[self.host] > scores[self.guest]:
+            self.winner = self.host
+            self.save()
             return str(self.host)
 
+        self.winner = self.guest
+        self.save()
         return str(self.guest)
 
 
@@ -92,15 +96,3 @@ class GameRoom(models.Model):
         self.status = 'complete'
         self.winner = winner
         self.save()
-
-
-class Move(models.Model):
-    game_room = models.ForeignKey(GameRoom, on_delete=models.CASCADE, related_name='moves')
-    player = models.ForeignKey(User, on_delete=models.CASCADE)
-    row = models.IntegerField()
-    col = models.IntegerField()
-    side = models.CharField(max_length=10)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Move by {self.player} at ({self.row}, {self.col}) on {self.side}"
