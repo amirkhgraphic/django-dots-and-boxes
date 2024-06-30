@@ -344,6 +344,8 @@ class TwoPlayerRoomConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def delete_room(self):
+        if not self.room.board.is_complete:
+            self.room.board.delete()
         self.room.delete()
 
 
@@ -532,11 +534,24 @@ class SinglePlayerRoomConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def check_game_over(self):
-        return self.room.board.is_complete
+        is_complete = self.room.board.is_complete
+
+        if is_complete:
+            self.room.status = 'complete'
+            self.room.save()
+
+        return is_complete
 
     @database_sync_to_async
     def delete_room(self):
-        self.room.delete()
+        if not self.room.board.is_complete:
+            self.room.board.delete()
+
+        try:
+            if self.room.status != 'complete':
+                self.room.delete()
+        except:
+            pass
 
     @database_sync_to_async
     def get_bot(self):

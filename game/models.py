@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -15,6 +16,7 @@ class Board(models.Model):
     guest = models.ForeignKey(User, on_delete=models.CASCADE, related_name='guest_games', null=True, blank=True)
     turn = models.CharField(max_length=7, choices=PLAYER_CHOICES, default='host')
     winner = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='victories')
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Board {self.id} ({self.size}x{self.size})"
@@ -50,10 +52,17 @@ class Square(models.Model):
     right = models.BooleanField(default=False)
     bottom = models.BooleanField(default=False)
     winner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='won_squares')
+    completed_at = models.DateTimeField(blank=True, null=True)
 
     @property
     def is_complete(self) -> bool:
-        return self.top and self.right and self.bottom and self.left
+        is_complete = self.top and self.right and self.bottom and self.left
+
+        if is_complete and self.completed_at is None:
+            self.completed_at = timezone.now()
+            self.save()
+
+        return is_complete
 
     class Meta:
         unique_together = ('board', 'row', 'col')
@@ -91,8 +100,3 @@ class GameRoom(models.Model):
             self.player2 = player
             self.status = 'playing'
             self.save()
-
-    def end_game(self, winner):
-        self.status = 'complete'
-        self.winner = winner
-        self.save()

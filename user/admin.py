@@ -1,18 +1,37 @@
 from django.contrib import admin
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils.html import format_html
 
-from user.models import User
+from game.models import Board
 from django.contrib.auth.admin import UserAdmin
 from django.utils.translation import gettext_lazy as _
 
 from utils.admin_mixin import DateListFilterMixin
 
 
+User = get_user_model()
+
+
+class HostBoardInline(admin.StackedInline):
+    fk_name = 'host'
+    model = Board
+    extra = 0
+    verbose_name = 'Host Game'
+
+
+class GuestBoardInline(admin.StackedInline):
+    fk_name = 'guest'
+    model = Board
+    extra = 0
+    verbose_name = 'Guest Game'
+
+
 @admin.register(User)
 class MyUserAdmin(UserAdmin, DateListFilterMixin):
     list_display = ('user_link', 'render_avatar', 'created_at', 'last_login', 'is_active', 'is_staff')
     readonly_fields = ('render_avatar', 'created_at', 'updated_at', 'last_login')
+    inlines = (HostBoardInline, GuestBoardInline)
     search_fields = ('username', )
     ordering = ('-created_at',)
     fieldsets = (
