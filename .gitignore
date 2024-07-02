@@ -4,5 +4,6 @@ __pycache__
 
 staticfiles/
 media/
+migrations/
 
 local_*
