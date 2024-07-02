@@ -3,8 +3,13 @@ from pathlib import Path
 from django.contrib import messages
 from django.urls import reverse_lazy
 
-from .local_settings import *
+SECRET_KEY = 'django-insecure-fs#&s+74_-0c8!!8*m%zb1^zo%r3)=8w$md=79ew&7jbq(_hts'
 
+DEBUG = True
+
+ALLOWED_HOSTS = ['*']
+
+ADMIN_URL = 'admin'
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -58,26 +63,26 @@ TEMPLATES = [
 
 ASGI_APPLICATION = 'dots_and_boxes.asgi.application'
 
-if DEBUG:
-    CHANNEL_LAYERS = {
-        'default': {
-            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+# if DEBUG:
+#     CHANNEL_LAYERS = {
+#         'default': {
+#             'BACKEND': 'channels.layers.InMemoryChannelLayer',
+#         },
+#     }
+# else:
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("redis://:43mVhHibzHx2Gdf3oOh08D1D@dots-and-boxes-redis:6379/0")],
         },
-    }
-else:
-    CHANNEL_LAYERS = {
-        "default": {
-            "BACKEND": "channels_redis.core.RedisChannelLayer",
-            "CONFIG": {
-                "hosts": [("redis://:43mVhHibzHx2Gdf3oOh08D1D@dots-and-boxes-redis:6379/0")],
-            },
-        },
-    }
+    },
+}
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': BASE_DIR / 'data/db.sqlite3',
     }
 }
 
