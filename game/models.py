@@ -15,6 +15,8 @@ class Board(models.Model):
     host = models.ForeignKey(User, on_delete=models.CASCADE, related_name='host_games', null=True, blank=True)
     guest = models.ForeignKey(User, on_delete=models.CASCADE, related_name='guest_games', null=True, blank=True)
     turn = models.CharField(max_length=7, choices=PLAYER_CHOICES, default='host')
+    host_score = models.PositiveIntegerField(default=0, null=True, blank=True)
+    guest_score = models.PositiveIntegerField(default=0, null=True, blank=True)
     winner = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='victories')
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -33,6 +35,9 @@ class Board(models.Model):
                 return False
             scores[square.winner] += 1
 
+        self.host_score = scores[self.host]
+        self.guest_score = scores[self.guest]
+
         if scores[self.host] > scores[self.guest]:
             self.winner = self.host
             self.save()
@@ -40,6 +45,7 @@ class Board(models.Model):
 
         self.winner = self.guest
         self.save()
+
         return str(self.guest)
 
 
