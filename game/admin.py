@@ -61,7 +61,8 @@ class SquareInline(admin.TabularInline):
 
 @admin.register(Board)
 class BoardAdmin(ModelAdmin, DateListFilterMixin):
-    list_display = ('id', 'room_link', 'size', 'host_link', 'guest_link', 'winner_link', 'created_at')
+    list_display = ('id', 'room_link', 'size', 'host_link', 'host_score', 'guest_link', 'guest_score', 'winner_link',
+                    'created_at')
     readonly_fields = ('created_at',)
     list_filter = ('size', 'host', 'guest', 'winner')
     inlines = (SquareInline,)

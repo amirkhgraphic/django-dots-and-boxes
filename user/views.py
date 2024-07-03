@@ -1,11 +1,13 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.shortcuts import redirect, render
 from django.contrib.auth import login, authenticate, get_user_model
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.generic import UpdateView
 
+from game.models import Board
 from user.forms import SignupForm, LoginForm, ProfileForm
 
 
@@ -89,3 +91,18 @@ class ProfileUpdateView(UpdateView):
             form.instance.avatar = form.files['avatar']
 
         return super().form_valid(form)
+
+
+@login_required
+def game_history_view(request):
+    # bot = User.objects.get(username='bot')
+    user = request.user
+    # single_player_games = Board.objects.filter(host=user, guest=bot)
+    # two_player_games = Board.objects.filter(Q(guest=user) | (Q(host=user) & ~Q(guest=bot)))
+    context = {
+        'user': user,
+        # 'single_player_games': single_player_games,
+        # 'two_player_games': two_player_games,
+        'games': Board.objects.filter(Q(host=user) | Q(guest=user)).order_by('-created_at')
+    }
+    return render(request, 'user/history.html', context=context)

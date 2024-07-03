@@ -74,7 +74,7 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("redis://:43mVhHibzHx2Gdf3oOh08D1D@alvand.liara.cloud:31602/0")],
+            "hosts": [("redis://:43mVhHibzHx2Gdf3oOh08D1D@dots-and-boxes-redis:6379/0")],
         },
     },
 }
