@@ -11,16 +11,36 @@ body {
 }
 
 header {
+    font-family: 'Inter', sans-serif;
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 100%;
     padding: 25px 50px;
-    font-family: 'Inter', sans-serif
 }
 
 header h1 {
     font-weight: bold;
+}
+
+#options {
+    display: flex;
+    gap: 1rem;
+}
+
+#history {
+    color: white;
+    border: 3px solid white;
+    border-radius: 50%;
+    box-sizing: border-box;
+    padding: 10px;
+}
+
+#history:hover {
+    background-color: white;
+    svg {
+        color: black;
+    }
 }
 
 main {
@@ -92,4 +112,39 @@ input {
 
 ul.errorlist li {
     color: #ff5555;
+}
+
+
+
+
+
+
+/* Mobile styles */
+@media (max-width: 600px) {
+    body {
+        font-size: 12px;
+    }
+
+    .game-btn {
+        width: 100% !important;
+    }
+
+    section {
+        width: 100% !important;
+    }
+}
+
+/* Tablet styles */
+@media (max-width: 900px) {
+    body {
+        font-size: 14px;
+    }
+
+    .game-btn {
+        width: 100% !important;
+    }
+
+    section {
+        width: 100% !important;
+    }
 }

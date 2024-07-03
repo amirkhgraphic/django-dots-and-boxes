@@ -7,7 +7,6 @@ section#profiles {
     width: 100%;
     z-index: 60;
 
-
     .profile {
         display: flex;
         justify-content: flex-start;
@@ -126,10 +125,6 @@ section#profiles {
         cursor: pointer;
     }
 
-    .line:hover {
-        background-color: white;
-    }
-
     /* vertical */
     .row-vertical {
         gap: 5.5rem;
@@ -182,3 +177,66 @@ section#profiles {
     }
 }
 
+/* Not Touch Devices */
+@media (hover: hover) {
+    .line:hover {
+        background-color: white;
+    }
+}
+
+/* Mobile styles */
+@media (max-width: 900px) {
+    body {
+        font-size: 12px;
+        text-align: center;
+
+    }
+
+    /* BOARD */
+    #game-section {
+        /* dots */
+        #dots {
+            gap: 3rem;
+        }
+
+        .row-dot {
+            gap: 3rem;
+        }
+
+        .dot {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+        /* dots end */
+
+        /* lines start */
+        #lines {
+            gap: 0.5rem;
+        }
+
+        .row-line {
+            gap: 1.5rem;
+        }
+
+        .line {
+            width: 3rem;
+        }
+
+        /* vertical */
+        .row-vertical {
+            gap: 4rem;
+        }
+
+        .vertical {
+            height: 3rem;
+            width: 0.5rem;
+        }
+        /* lines end */
+
+        /* squares start */
+        .square {
+            width: 4.5rem;
+            height: 4.5rem;
+        }
+    }
+}

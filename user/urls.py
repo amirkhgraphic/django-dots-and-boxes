@@ -5,6 +5,7 @@ from .views import authentication_view, login_view, signup_view, ProfileUpdateVi
 
 urlpatterns = [
     path('', ProfileUpdateView.as_view(), name='profile'),
+    path('history/', ProfileUpdateView.as_view(), name='history'),
     path('auth/', authentication_view, name='auth'),
     path('signup/', signup_view, name='sign-up'),
     path('login/', login_view, name='log-in'),

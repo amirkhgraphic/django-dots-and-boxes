@@ -57,6 +57,36 @@
             background: rgba(0,0,0,0.5);
             z-index: 50;
         }
+
+        /* Mobile styles */
+        @media (max-width: 600px) {
+            body {
+                font-size: 12px;
+            }
+
+            .text-big {
+                font-size: 6rem;
+            }
+
+            .btn-wrapper {
+                width: 100%;
+            }
+        }
+
+        /* Tablet styles */
+        @media (min-width: 601px) and (max-width: 900px) {
+            body {
+                font-size: 14px;
+            }
+
+            .text-big {
+                font-size: 8rem;
+            }
+
+            .btn-wrapper {
+                width: 100%;
+            }
+        }
     </style>
     <link rel="stylesheet" href="{% static 'css/board_style.css' %}">
 {% endblock %}

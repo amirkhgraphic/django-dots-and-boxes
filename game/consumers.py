@@ -168,7 +168,7 @@ class TwoPlayerRoomConsumer(AsyncWebsocketConsumer):
             host = await self.get_host()
             guest = users[0] if users[1] == host else users[1]
             turn = str(await self.get_player_turn())
-            await self.set_board_players(host, guest)
+            await self.set_players(host, guest)
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
@@ -270,10 +270,11 @@ class TwoPlayerRoomConsumer(AsyncWebsocketConsumer):
 
     '''Database Modification Methods'''
     @database_sync_to_async
-    def set_board_players(self, host, guest):
-        self.room.board.host = host
-        self.room.board.guest = guest
+    def set_players(self, host, guest):
+        self.room.board.host = self.room.player1 = host
+        self.room.board.guest = self.room.player2 = guest
         self.room.board.save()
+        self.room.save()
 
     @database_sync_to_async
     def get_role(self):
@@ -357,6 +358,7 @@ class SinglePlayerRoomConsumer(AsyncWebsocketConsumer):
         self.user = self.scope['user']
         self.bot = await self.get_bot()
         self.side_choices = await self.get_available_sides()
+        await self.set_players(self.user, self.bot)
 
         await self.channel_layer.group_add(
             self.room_group_name,
@@ -507,6 +509,12 @@ class SinglePlayerRoomConsumer(AsyncWebsocketConsumer):
         }))
 
     # Database
+    @database_sync_to_async
+    def set_players(self, host, guest):
+        self.room.board.host = host
+        self.room.board.guest = guest
+        self.room.board.save()
+
     @database_sync_to_async
     def make_move(self, row, col, side, player):
         try:
