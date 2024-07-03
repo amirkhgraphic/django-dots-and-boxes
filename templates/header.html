@@ -1,12 +1,24 @@
+{% load static %}
 <header>
-    <a href="{% url 'home' %}" style="all: unset; cursor: pointer"><h1>Dots & Boxes Online Game</h1></a>
+    <a href="{% url 'home' %}" style="all: unset; cursor: pointer"><h1>
+        <span><img src="{% static "img/logo.svg" %}" alt=""></span>
+        Dots & Boxes
+    </h1></a>
     {% if user.is_authenticated %}
         <div style="display: flex; align-items: center">
             <form style="margin: 0" method="POST" action="{% url 'user:log-out' %}">
                 {% csrf_token %}
                 <button type="submit" class="logout">Log-out</button>
             </form>
-            <img src="{{ user.avatar.url }}" alt="profile" width="50px" height="50px">
+            <a href="{% url "user:profile" %}">
+                <img
+                        class="rounded-circle"
+                        src="{{ user.avatar.url }}"
+                        alt="profile"
+                        width="50px"
+                        height="50px"
+                >
+            </a>
         </div>
     {% endif %}
 </header>

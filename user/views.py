@@ -1,8 +1,15 @@
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, get_user_model
+from django.urls import reverse_lazy
+from django.utils.decorators import method_decorator
+from django.views.generic import UpdateView
 
-from user.forms import SignupForm, LoginForm
+from user.forms import SignupForm, LoginForm, ProfileForm
+
+
+User = get_user_model()
 
 
 def login_view(request):
@@ -63,3 +70,22 @@ def authentication_view(request):
         'login_form': login_form
     }
     return render(request, 'user/authenticataion-page.html', context=context)
+
+
+@method_decorator(login_required, name='dispatch')
+class ProfileUpdateView(UpdateView):
+    model = User
+    form_class = ProfileForm
+    template_name = 'user/profile.html'
+    success_url = reverse_lazy('user:profile')
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+    def form_valid(self, form):
+        form.instance = self.request.user
+
+        if 'avatar' in form.files:
+            form.instance.avatar = form.files['avatar']
+
+        return super().form_valid(form)

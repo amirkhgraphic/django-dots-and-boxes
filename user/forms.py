@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django import forms
 
 User = get_user_model()
 
@@ -14,6 +15,15 @@ class SignupForm(UserCreationForm):
         self.fields['username'].widget.attrs['class'] = 'form-control mb-2'
         self.fields['username'].widget.attrs['placeholder'] = 'Choose a username'
 
+        self.fields['email'].widget.attrs['class'] = 'form-control mb-2'
+        self.fields['email'].widget.attrs['placeholder'] = 'Enter your email (optional)'
+
+        self.fields['first_name'].widget.attrs['class'] = 'form-control mb-2'
+        self.fields['first_name'].widget.attrs['placeholder'] = 'Enter your first name (optional)'
+
+        self.fields['last_name'].widget.attrs['class'] = 'form-control mb-2'
+        self.fields['last_name'].widget.attrs['placeholder'] = 'Enter your last name (optional)'
+
         self.fields['password1'].widget.attrs['class'] = 'form-control mb-2'
         self.fields['password1'].widget.attrs['placeholder'] = 'Enter a password'
 
@@ -22,7 +32,7 @@ class SignupForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ('avatar', 'username', 'password1', 'password2')
+        fields = ('avatar', 'username', 'email', 'first_name', 'last_name', 'password1', 'password2')
 
 
 class LoginForm(AuthenticationForm):
@@ -34,3 +44,9 @@ class LoginForm(AuthenticationForm):
 
         self.fields['password'].widget.attrs['class'] = 'form-control mb-2'
         self.fields['password'].widget.attrs['placeholder'] = 'Password'
+
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ('avatar', 'username', 'email', 'first_name', 'last_name')
