@@ -1,5 +1,5 @@
-## Django Instagram Clone
-Instagram clone using python django with a lot of Instagram features.
+## Django Dots & Boxes Online Game
+Dots & Boxes Online Game using python/django for backend and real-time communication using websockets and `django-channels` package.
 
 ## Preview
 ![Home Page](./screen-shots/home.png)
