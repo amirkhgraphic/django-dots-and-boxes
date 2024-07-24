@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block styles %}
+    <style>
+        main {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .games {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+
+        }
+
+        .game {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-radius: 500px;
+        }
+
+        .lose {
+            background-color: #ff2f2f;
+        }
+
+        .win {
+            background-color: #007BFF;
+        }
+
+        .profile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        @media (min-width: 901px) {
+            main {
+                padding: 50px 150px;
+            }
+        }
+
+    </style>
+{% endblock %}
+
+{% block header %}
+    {% include 'header.html' %}
+{% endblock %}
+
+{% block main %}
+    <main>
+        <section>
+            <h2>Game History</h2>
+            <div class="line"></div>
+
+            <ul class="games m-0 p-0 pt-5">
+                {% for board in games %}
+                <li class="game m-0 {% if board.winner == request.user %}win{% else %}lose{% endif %}">
+                    <div class="profile host-profile">
+                        <img src="{{ board.host.avatar.url }}" class="host-avatar rounded-circle" alt="host-avatar" width="50px" height="50px">
+                        <div class="username host-username">{{ board.host }}</div>
+                    </div>
+
+                    <h4 class="game-result">{{ board.host_score }} | {{ board.guest_score }}</h4>
+
+                    <div class="profile guest-profile">
+                        <div class="username guest-username">{{ board.guest }}</div>
+                        <img src="{{ board.guest.avatar.url }}" class="guest-avatar rounded-circle" alt="guest-avatar" width="50px" height="50px">
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </section>
+    </main>
+{% endblock main %}

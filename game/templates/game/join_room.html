@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block styles %}
+    <style>
+        main {
+            display: flex;
+            justify-content: center;
+        }
+
+        section {
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+            gap: 10px;
+            width: 50%;
+        }
+    </style>
+{% endblock %}
+
+{% block header %}
+    {% include 'header.html' %}
+{% endblock %}
+
+{% block main %}
+    <main>
+        <section>
+            {% if error %}
+                <div class="alert alert-danger" role="alert">{{ error }}</div>
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+                <input name="room_id" type="text" required placeholder="Enter room name...">
+                <button class="btn">Join</button>
+            </form>
+        </section>
+    </main>
+{% endblock %}

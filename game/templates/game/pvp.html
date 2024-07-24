@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block header %}
+    {% include 'header.html' %}
+{% endblock %}
+
+{% block styles %}
+    <style>
+        main {
+            display: block;
+            text-align: center;
+        }
+
+        .game-btn {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 3px solid white;
+            border-radius: 10px;
+            color: white;
+            width: 50%;
+            font-weight: bold;
+            font-size: 24px;
+        }
+
+        .game-btn:hover {
+            background-color: white;
+            color: #2473D0;
+        }
+    </style>
+{% endblock %}
+
+{% block main %}
+    <main>
+        <section>
+            <a href="{% url "game:create-room" %}">
+                <button class="btn game-btn">Create Room</button>
+            </a>
+            <a href="{% url "game:join-room" %}">
+                <button class="btn game-btn">Join Room</button>
+            </a>
+        </section>
+    </main>
+{% endblock %}

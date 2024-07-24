@@ -1,0 +1,150 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-image: url('../img/background.jpg');
+    background-size: cover;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 150vh;
+}
+
+header {
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 25px 50px;
+}
+
+header h1 {
+    font-weight: bold;
+}
+
+#options {
+    display: flex;
+    gap: 1rem;
+}
+
+#history {
+    color: white;
+    border: 3px solid white;
+    border-radius: 50%;
+    box-sizing: border-box;
+    padding: 10px;
+}
+
+#history:hover {
+    background-color: white;
+    svg {
+        color: black;
+    }
+}
+
+main {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 30px;
+    padding: 50px 50px;
+}
+
+section h2 {
+    text-align: center;
+}
+
+div.line {
+    width: 100%;
+    height: 3px;
+    background-color: white;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin-top: 20px;
+    gap: 10px;
+}
+
+
+label {
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+input {
+    margin-bottom: 15px;
+    padding: 10px;
+    border-radius: 5px;
+    border: none;
+    font-size: 1em;
+}
+
+.btn {
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    margin-top: 10px;
+    width: fit-content;
+    min-width: 25%;
+    background-color: #007BFF;
+    color: white;
+}
+
+.btn:hover {
+    color: inherit;
+}
+
+.logout {
+    background: unset;
+    border: none;
+    color: white;
+}
+
+.logout:hover {
+    text-decoration: underline;
+}
+
+ul.errorlist li {
+    color: #ff5555;
+}
+
+
+
+
+
+
+/* Mobile styles */
+@media (max-width: 600px) {
+    body {
+        font-size: 12px;
+    }
+
+    .game-btn {
+        width: 100% !important;
+    }
+
+    section {
+        width: 100% !important;
+    }
+}
+
+/* Tablet styles */
+@media (max-width: 900px) {
+    body {
+        font-size: 14px;
+    }
+
+    .game-btn {
+        width: 100% !important;
+    }
+
+    section {
+        width: 100% !important;
+    }
+}

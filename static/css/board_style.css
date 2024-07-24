@@ -1,0 +1,242 @@
+/* PROFILES */
+section#profiles {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    z-index: 60;
+
+    .profile {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        gap: -50px;
+    }
+
+    .profile img {
+        border-radius: 50%;
+        z-index: 1;
+    }
+
+    .online {
+        position: relative;
+        top: 1.5rem;
+        left: 4.5rem;
+        background-color: #00ff62;
+        width: 1rem;
+        height: 1rem;
+        border-radius: 50%;
+        z-index: 2;
+        visibility: hidden;
+    }
+
+    #guest-online {
+        left: -4.5rem;
+    }
+
+    .username {
+        position: relative;
+        left: -1rem;
+        color: white;
+        padding: 0.5rem 1.5rem;
+        border-radius: 1rem;
+    }
+
+    #guest .username {
+        left: 1rem;
+    }
+
+    #host img {
+        background-color: #007BFF;
+        border: 5px solid #007BFF;
+
+    }
+
+    #host .username {
+        background-color: #007BFF;
+    }
+
+
+    #guest img {
+        background-color: #ff2f2f;
+        border: 5px solid #ff2f2f;
+    }
+
+    #guest .username {
+        background-color: #ff2f2f;
+    }
+}
+
+/* BOARD */
+#game-section {
+    display: none;
+    align-items: center;
+    justify-content: center;
+
+    /* dots */
+    #dots {
+        position: absolute;
+        z-index: 20;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 4rem;
+    }
+
+    .row-dot {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 4rem;
+    }
+
+    .dot {
+        background-color: rgb(220, 220, 220);
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+    }
+    /* dots end */
+
+    /* lines start */
+    #lines {
+        position: relative;
+        z-index: 30;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .row-line {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+    }
+
+    .line {
+        background-color: rgb(220, 220, 220);
+        width: 4rem;
+        height: 0.5rem;
+        cursor: pointer;
+    }
+
+    /* vertical */
+    .row-vertical {
+        gap: 5.5rem;
+    }
+
+    .vertical {
+        height: 4rem;
+        width: 0.5rem;
+    }
+    /* lines end */
+
+    .host-line {
+        background-color: #007BFF;
+    }
+
+    .guest-line {
+        background-color: #ff2f2f;
+    }
+
+    /* squares start */
+    #squares {
+        position: absolute;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        /* gap: 1rem; */
+    }
+
+    .row-square {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        /* gap: 1rem; */
+    }
+
+    .square {
+        width: 6rem;
+        height: 6rem;
+        background-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .host-square {
+        background-color: rgb(161, 161, 255);
+    }
+
+    .guest-square {
+        background-color: rgb(255, 161, 161);
+    }
+}
+
+/* Not Touch Devices */
+@media (hover: hover) {
+    .line:hover {
+        background-color: white;
+    }
+}
+
+/* Mobile styles */
+@media (max-width: 900px) {
+    body {
+        font-size: 12px;
+        text-align: center;
+
+    }
+
+    /* BOARD */
+    #game-section {
+        /* dots */
+        #dots {
+            gap: 3rem;
+        }
+
+        .row-dot {
+            gap: 3rem;
+        }
+
+        .dot {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+        /* dots end */
+
+        /* lines start */
+        #lines {
+            gap: 0.5rem;
+        }
+
+        .row-line {
+            gap: 1.5rem;
+        }
+
+        .line {
+            width: 3rem;
+        }
+
+        /* vertical */
+        .row-vertical {
+            gap: 4rem;
+        }
+
+        .vertical {
+            height: 3rem;
+            width: 0.5rem;
+        }
+        /* lines end */
+
+        /* squares start */
+        .square {
+            width: 4.5rem;
+            height: 4.5rem;
+        }
+    }
+}

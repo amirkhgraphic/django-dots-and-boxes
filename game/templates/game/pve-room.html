@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block styles %}
+    <style>
+        #room-name {
+            z-index: 60;
+        }
+
+        main {
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 10px;
+            width: 50%;
+        }
+
+        #game-section {
+            display: flex;
+        }
+
+        #pending-section {
+            display: flex;
+        }
+
+        .btn-cancel {
+            background-color: #D02424;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            color: white;
+            background-color: #a61b1b;
+            transition: ease-in-out 0.3s;
+        }
+
+        .overlay {
+            visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 150vh;
+            background: rgba(0,0,0,0.5);
+            z-index: 50;
+        }
+
+        /* Mobile styles */
+        @media (max-width: 600px) {
+            body {
+                font-size: 12px;
+            }
+
+            .text-big {
+                font-size: 6rem;
+            }
+
+            .btn-wrapper {
+                width: 100%;
+            }
+        }
+
+        /* Tablet styles */
+        @media (min-width: 601px) and (max-width: 900px) {
+            body {
+                font-size: 14px;
+            }
+
+            .text-big {
+                font-size: 8rem;
+            }
+
+            .btn-wrapper {
+                width: 100%;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="{% static 'css/board_style.css' %}">
+{% endblock %}
+
+{% block main %}
+    <main>
+        <h1 id="room-name">Room name: {{ room_id }}</h1>
+
+        <section id="profiles">
+            <div class="profile" id="host">
+                <div class="online" id="host-online"></div>
+                <img src="{{ user.avatar.url }}" id="host-avatar" alt="host-avatar" width="75px" height="75px">
+                <div class="username" id="host-username">{{ user.username }}</div>
+            </div>
+
+            <div class="profile" id="guest" dir="rtl">
+                <div class="online" id="guest-online"></div>
+                <img src="{{ bot.avatar.url }}" id="guest-avatar" alt="guest-avatar" width="75px" height="75px">
+                <div dir="ltr" class="username" id="guest-username">Bot</div>
+            </div>
+        </section>
+
+        <div id="score-board" class="overlay">
+            <h2 id="winner"></h2>
+            <a style="width: 50%" href="{% url "home" %}">
+                <button class="btn btn-cancel" >&times;</button>
+            </a>
+        </div>
+
+        <section id="game-section">
+            <div id="dots"></div>
+            <div id="lines"></div>
+            <div id="squares"></div>
+        </section>
+    </main>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        let socket;
+        const playerColors = {
+            "@{{ user.username }}": 'host',
+            "@{{ bot.username }}": 'guest',
+        };
+        const host = "@{{ user.username }}";
+        const guest = "@{{ bot.username }}";
+        const roomName = "{{ room_id }}";
+        let playerTurn = host;
+
+        // game board section
+        const gameSection = document.getElementById('game-section');
+        const pendingSection = document.getElementById('pending-section');
+        const dots = document.getElementById('dots');
+        const lines = document.getElementById('lines');
+        const squares = document.getElementById('squares');
+        const scoreBoard = document.getElementById('score-board');
+        const winner = document.getElementById('winner');
+
+        function initializeWebSocket() {
+            socket = new WebSocket(`ws://${window.location.host}/ws/single-player-room/${roomName}/`);
+            gameSection.style.display = 'flex';
+
+            socket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+
+                if (data.type === 'game_move') {
+                    updateGameBoard(data.row, data.col, data.side, data.player);
+
+                    let complete_squares = data.squares;
+                    if (complete_squares.length !== 0) {
+                        for (let square of complete_squares) {
+                            fillSquare(square.row, square.col, data.player);
+                        }
+                    }
+
+
+                }
+
+                else if (data.type === 'wrong_move') {
+                    alert("Invalid Move!");
+                }
+
+                else if (data.type === 'game_over') {
+                    if (data.winner === 'Draw') {
+                        winner.innerText = 'Match Ends in a Draw.';
+                    } else if (data.winner === host) {
+                        winner.innerText = 'You won the match :)';
+                    } else {
+                        winner.innerText = 'You lost the match :(';
+                    }
+
+                    scoreBoard.style.visibility = 'visible';
+                }
+            };
+
+            socket.onerror = function(error) {
+                console.error('WebSocket error:', error);
+            };
+
+            socket.onclose = function() {
+                console.log('WebSocket connection closed');
+            };
+        }
+
+        function sendMove(row, col, side) {
+            if (host !== playerTurn) {
+                alert('its not your turn');
+            }
+            else if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    'action': 'make_move',
+                    'row': row,
+                    'col': col,
+                    'side': side,
+                    'player': host
+                }));
+
+            }
+            else {
+                console.error('WebSocket is not open. Ready state:', socket.readyState);
+            }
+        }
+
+        function createGameBoard(n) {
+            // dots
+            for (let i = 1; i <= n; i++) {
+                let rowDot = document.createElement('div');
+                rowDot.classList.add('row-dot');
+
+                for (let j = 1; j <= n; j++) {
+                    rowDot.appendChild(createDot());
+                }
+                dots.appendChild(rowDot)
+            }
+
+            // lines
+            for (let i = 1; i <= n; i++) {
+                let rowLine = document.createElement('div');
+                rowLine.classList.add('row-line');
+                let rowLineVertical = document.createElement('div');
+                rowLineVertical.classList.add('row-line', 'row-vertical');
+
+                for (let j = 1; j <= n; j++) {
+                    if (i !== n) {
+                        if (j !== n) {
+                            rowLine.appendChild(createLine(i, j, 'top', ['line']));
+                            rowLineVertical.appendChild(createLine(i, j, 'left', ['line', 'vertical']));
+                        } else rowLineVertical.appendChild(createLine(i, j - 1, 'right', ['line', 'vertical']));
+
+                    } else {
+                        if (j !== n) rowLine.appendChild(createLine(i - 1, j, 'bottom', ['line']));
+                    }
+                }
+
+                lines.appendChild(rowLine);
+                if (i !== n) lines.appendChild(rowLineVertical);
+            }
+
+            // squares
+            for (let i = 1; i < n; i++) {
+                let rowSquare = document.createElement('div');
+                rowSquare.classList.add('row-square');
+
+                for (let j = 1; j < n; j++) {
+                    rowSquare.appendChild(createSquare(i, j));
+                }
+                squares.appendChild(rowSquare)
+            }
+        }
+
+        function createDot() {
+            const dot = document.createElement('div');
+            dot.classList.add('dot');
+            return dot;
+        }
+
+        function createLine(row, col, side, classList) {
+            const line = document.createElement('div');
+            line.classList.add(...classList);
+            line.setAttribute('data-row', row);
+            line.setAttribute('data-col', col);
+            line.setAttribute('data-side', side);
+            line.addEventListener('click', () => sendMove(row, col, side));
+            return line;
+        }
+
+        function createSquare(row, col) {
+            const square = document.createElement('div');
+            square.classList.add('square');
+            square.setAttribute('data-row', row);
+            square.setAttribute('data-col', col);
+            return square;
+        }
+
+        function updateGameBoard(row, col, side, player) {
+            document.querySelector(`[data-row="${row}"][data-col="${col}"][data-side="${side}"]`).classList.add(`${playerColors[player]}-line`);
+        }
+
+        function fillSquare(row, col, player) {
+            const square = document.querySelector(`.square[data-row="${row}"][data-col="${col}"]`);
+            square.classList.add(`${playerColors[player]}-square`);
+        }
+
+        // Initialize WebSocket and create the game board when the page loads
+        window.onload = () => {
+            createGameBoard({{ board_size }});
+            initializeWebSocket();
+        };
+    </script>
+{% endblock %}
